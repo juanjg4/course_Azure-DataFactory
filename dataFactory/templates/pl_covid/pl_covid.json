@@ -1,0 +1,426 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Nombre de instancia de Data Factory"
+		},
+		"ls_covid_ds": {
+			"type": "string"
+		},
+		"ls_covid_dl": {
+			"type": "string"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_covid')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Validate file exists",
+						"type": "Validation",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "ds_covid_bs",
+								"type": "DatasetReference"
+							},
+							"timeout": "0.00:02:00",
+							"sleep": 10
+						}
+					},
+					{
+						"name": "Get Covid file metadata",
+						"type": "GetMetadata",
+						"dependsOn": [
+							{
+								"activity": "Validate file exists",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "ds_covid_bs",
+								"type": "DatasetReference"
+							},
+							"fieldList": [
+								"exists",
+								"itemName",
+								"columnCount",
+								"size"
+							],
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							},
+							"formatSettings": {
+								"type": "DelimitedTextReadSettings"
+							}
+						}
+					},
+					{
+						"name": "If Condition1",
+						"type": "IfCondition",
+						"dependsOn": [
+							{
+								"activity": "Get Covid file metadata",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@equals(activity('Get Covid file metadata').output.columnCount, 12)",
+								"type": "Expression"
+							},
+							"ifFalseActivities": [
+								{
+									"name": "Wrong columns",
+									"type": "Fail",
+									"dependsOn": [],
+									"userProperties": [],
+									"typeProperties": {
+										"message": "Wrong number of columns",
+										"errorCode": "1"
+									}
+								}
+							],
+							"ifTrueActivities": [
+								{
+									"name": "CopyData-Covid",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 1,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "DelimitedTextSource",
+											"storeSettings": {
+												"type": "AzureBlobStorageReadSettings",
+												"recursive": true,
+												"enablePartitionDiscovery": false
+											},
+											"formatSettings": {
+												"type": "DelimitedTextReadSettings"
+											}
+										},
+										"sink": {
+											"type": "DelimitedTextSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "DelimitedTextWriteSettings",
+												"quoteAllText": true,
+												"fileExtension": ".csv"
+											}
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"mappings": [
+												{
+													"source": {
+														"name": "date",
+														"type": "String",
+														"physicalType": "String"
+													},
+													"sink": {
+														"name": "date",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"name": "state",
+														"type": "String",
+														"physicalType": "String"
+													},
+													"sink": {
+														"name": "state",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"name": "city",
+														"type": "String",
+														"physicalType": "String"
+													},
+													"sink": {
+														"name": "city",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"name": "place_type",
+														"type": "String",
+														"physicalType": "String"
+													},
+													"sink": {
+														"name": "place_type",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"name": "confirmed",
+														"type": "String",
+														"physicalType": "String"
+													},
+													"sink": {
+														"name": "confirmed",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"name": "deaths",
+														"type": "String",
+														"physicalType": "String"
+													},
+													"sink": {
+														"name": "deaths",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"name": "order_for_place",
+														"type": "String",
+														"physicalType": "String"
+													},
+													"sink": {
+														"name": "order_for_place",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"name": "is_last",
+														"type": "String",
+														"physicalType": "String"
+													},
+													"sink": {
+														"name": "is_last",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"name": "estimated_population_2019",
+														"type": "String",
+														"physicalType": "String"
+													},
+													"sink": {
+														"name": "estimated_population_2019",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"name": "city_ibge_code",
+														"type": "String",
+														"physicalType": "String"
+													},
+													"sink": {
+														"name": "city_ibge_code",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"name": "confirmed_per_100k_inhabitants",
+														"type": "String",
+														"physicalType": "String"
+													},
+													"sink": {
+														"name": "confirmed_per_100k_inhabitants",
+														"type": "String",
+														"physicalType": "String"
+													}
+												},
+												{
+													"source": {
+														"name": "death_rate",
+														"type": "String",
+														"physicalType": "String"
+													},
+													"sink": {
+														"name": "death_rate",
+														"type": "String",
+														"physicalType": "String"
+													}
+												}
+											],
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_covid_bs",
+											"type": "DatasetReference"
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ds_covid_dl",
+											"type": "DatasetReference"
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_covid_bs')]",
+				"[concat(variables('factoryId'), '/datasets/ds_covid_dl')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_covid_bs')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('ls_covid_ds')]",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "covid_population.csv",
+						"container": "population"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "date",
+						"type": "String"
+					},
+					{
+						"name": "state",
+						"type": "String"
+					},
+					{
+						"name": "city",
+						"type": "String"
+					},
+					{
+						"name": "place_type",
+						"type": "String"
+					},
+					{
+						"name": "confirmed",
+						"type": "String"
+					},
+					{
+						"name": "deaths",
+						"type": "String"
+					},
+					{
+						"name": "order_for_place",
+						"type": "String"
+					},
+					{
+						"name": "is_last",
+						"type": "String"
+					},
+					{
+						"name": "estimated_population_2019",
+						"type": "String"
+					},
+					{
+						"name": "city_ibge_code",
+						"type": "String"
+					},
+					{
+						"name": "confirmed_per_100k_inhabitants",
+						"type": "String"
+					},
+					{
+						"name": "death_rate",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_covid_dl')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('ls_covid_dl')]",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileSystem": "raw"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": []
+		}
+	]
+}
