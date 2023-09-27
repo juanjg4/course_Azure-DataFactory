@@ -10,7 +10,6 @@
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobFSLocation",
-				"fileName": "covid_population.csv",
 				"fileSystem": "raw"
 			},
 			"columnDelimiter": ",",
