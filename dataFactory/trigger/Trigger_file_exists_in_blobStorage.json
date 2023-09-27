@@ -2,7 +2,7 @@
 	"name": "Trigger_file_exists_in_blobStorage",
 	"properties": {
 		"annotations": [],
-		"runtimeState": "Stopped",
+		"runtimeState": "Started",
 		"pipelines": [
 			{
 				"pipelineReference": {
