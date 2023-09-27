@@ -1,0 +1,17 @@
+{
+	"name": "Trigger_file_exists_in_blobStorage",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Started",
+		"pipelines": [],
+		"type": "BlobEventsTrigger",
+		"typeProperties": {
+			"blobPathBeginsWith": "/population/blobs/covid",
+			"ignoreEmptyBlobs": true,
+			"scope": "/subscriptions/0f78634a-6d0b-4907-8d39-a1af195e9b3f/resourceGroups/cursoAzure/providers/Microsoft.Storage/storageAccounts/covidbsjjgil1",
+			"events": [
+				"Microsoft.Storage.BlobCreated"
+			]
+		}
+	}
+}
